@@ -22,7 +22,6 @@
     "windowHours": 24
   },
   "defaultLabels": ["ci-cd", "pipeline-failure", "automated"],
-  "defaultAssignee": "${JIRA_ASSIGNEE}",
   "severity": {
     "critical": ["security", "production-down"],
     "high": ["database", "api-failure"],

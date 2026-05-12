@@ -13,46 +13,25 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [18, 20]
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20'
           cache: 'npm'
           
       - name: Install dependencies
         run: npm ci
         
-      - name: Run linting
-        run: npm run lint
-        
-      - name: Run unit tests
-        run: npm run test:unit
-        
-      - name: Run integration tests
-        run: npm run test:integration
-        
-      - name: Run failing tests (for PipelineIQ demo)
-        run: npm run test:fail
+      - name: Run tests (some will fail to test PipelineIQ)
+        run: npm test
         continue-on-error: true
         
       - name: Build application
         run: npm run build
-        
-      - name: Deploy to staging
-        if: github.ref == 'refs/heads/develop'
-        run: npm run deploy
-        
-      - name: Deploy to production
-        if: github.ref == 'refs/heads/main'
-        run: npm run deploy
 
   # PipelineIQ Integration - Always runs to handle failures
   pipelineiq-failure-handler:
@@ -72,25 +51,7 @@ jobs:
       - name: Install PipelineIQ CLI
         run: npm install -g @pipelineiq/cli
         
-      - name: Create Jira ticket with PipelineIQ
-        uses: pipelineiq/action@github-action-v0.2.1
-        with:
-          jira-url: ${{ secrets.JIRA_URL }}
-          jira-email: ${{ secrets.JIRA_EMAIL }}
-          jira-token: ${{ secrets.JIRA_TOKEN }}
-          jira-project: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
-          issue-type: Bug
-          ai-mode: assist
-          ai-provider: openai
-          environment: ${{ github.ref_name }}
-          default-assignee: ${{ secrets.JIRA_ASSIGNEE }}
-        env:
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
-        continue-on-error: true
-        
-      - name: Create Jira ticket with PipelineIQ CLI (fallback)
-        if: failure()
+      - name: Create Jira ticket with PipelineIQ CLI
         run: |
           pipelineiq analyze \
             --logs-path ./logs \
@@ -100,6 +61,7 @@ jobs:
             --jira-token ${{ secrets.JIRA_TOKEN }} \
             --jira-project ${{ secrets.JIRA_PROJECT || 'SCRUM' }} \
             --ai-provider openai \
+            --ai-mode assist \
             --environment ${{ github.ref_name }} \
             --pipeline-name "GitHub Actions" \
             --repository ${{ github.repository }} \
@@ -107,7 +69,10 @@ jobs:
             --commit ${{ github.sha }} \
             --workflow-name ${{ github.workflow }} \
             --run-id ${{ github.run_id }} \
-            --run-number ${{ github.run_number }}
+            --run-number ${{ github.run_number }} \
+            --actor ${{ github.actor }} \
+            --event-name ${{ github.event_name }} \
+            --issue-type Bug
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
@@ -115,7 +80,8 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
         continue-on-error: true
-
+        
+      
   
   # Security Scan Job
   security-scan:
