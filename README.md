@@ -26,7 +26,7 @@ piq-test/
 │   └── workflows/
 │       └── ci.yml            # GitHub Actions workflow
 ├── azure-pipelines.yml       # Azure DevOps pipeline
-├── pipelineiq.json           # PipelineIQ configuration
+├── pipelineiq-config.json     # PipelineIQ configuration
 ├── .env.example              # Environment variables template
 └── docs/
     ├── setup.md              # Setup instructions
@@ -90,7 +90,7 @@ npm install
 npm test
 
 # Check PipelineIQ configuration
-cat pipelineiq.json
+cat pipelineiq-config.json
 ```
 
 ## 📚 Documentation

@@ -17,7 +17,8 @@
   "dependencies": {
     "express": "^4.18.2",
     "axios": "^1.6.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "pipelineiq-cli": "^0.2.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

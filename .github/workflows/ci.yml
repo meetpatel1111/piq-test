@@ -48,8 +48,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      - name: Install PipelineIQ CLI
-        run: npm install -g @pipelineiq/cli
+      - name: Install PipelineIQ package
+        run: npm install pipelineiq
         
       - name: Create Jira ticket with PipelineIQ CLI
         run: |
@@ -161,7 +161,7 @@ jobs:
         run: npm ci
         
       - name: Install PipelineIQ CLI
-        run: npm install -g @pipelineiq/cli
+        run: npm install pipelineiq-cli
         
       - name: Test PipelineIQ with different AI providers
         run: |
