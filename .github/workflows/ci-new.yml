@@ -27,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Install PipelineIQ CLI
-        run: npm install pipelineiq-cli
-        
       - name: Run tests (some will fail to test PipelineIQ)
         run: npm test
         continue-on-error: true
@@ -62,7 +59,7 @@ jobs:
           cache: 'npm'
           
       - name: Install PipelineIQ CLI
-        run: npm install pipelineiq-cli
+        run: npm install pipelineiq
         
       - name: Create Jira ticket with PipelineIQ CLI
         run: |
