@@ -54,11 +54,11 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: npm run deploy
 
-  # PipelineIQ Integration - GitHub Actions Failure
-  pipelineiq-github-failure:
-    needs: build-and-test
+  # PipelineIQ Integration - Always runs to handle failures
+  pipelineiq-failure-handler:
     runs-on: ubuntu-latest
-    if: failure() && needs.build-and-test.result == 'failure'
+    if: always() && (needs.build-and-test.result == 'failure' || needs.build-and-test.result == 'cancelled')
+    needs: build-and-test
     
     steps:
       - name: Checkout code
@@ -87,26 +87,10 @@ jobs:
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
-
-  # PipelineIQ Integration - CLI Version
-  pipelineiq-cli-failure:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: failure() && needs.build-and-test.result == 'failure'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        continue-on-error: true
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          
-      - name: Install PipelineIQ CLI
-        run: npm install -g @pipelineiq/cli
-        
-      - name: Analyze failure with PipelineIQ CLI
+      - name: Create Jira ticket with PipelineIQ CLI (fallback)
+        if: failure()
         run: |
           pipelineiq analyze \
             --logs-path ./logs \
@@ -116,14 +100,23 @@ jobs:
             --jira-token ${{ secrets.JIRA_TOKEN }} \
             --jira-project ${{ secrets.JIRA_PROJECT || 'SCRUM' }} \
             --ai-provider openai \
-            --environment ${{ github.ref_name }}
+            --environment ${{ github.ref_name }} \
+            --pipeline-name "GitHub Actions" \
+            --repository ${{ github.repository }} \
+            --branch ${{ github.ref_name }} \
+            --commit ${{ github.sha }} \
+            --workflow-name ${{ github.workflow }} \
+            --run-id ${{ github.run_id }} \
+            --run-number ${{ github.run_number }}
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
+        continue-on-error: true
 
+  
   # Security Scan Job
   security-scan:
     runs-on: ubuntu-latest

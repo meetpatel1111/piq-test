@@ -163,7 +163,7 @@ stages:
 - stage: PipelineIQFailureHandler
   displayName: 'PipelineIQ Failure Handler'
   dependsOn: [Build, Security]
-  condition: failed()
+  condition: always()
   
   jobs:
   - job: CreateJiraTicket
@@ -181,7 +181,7 @@ stages:
       
     - task: PipelineIQ@0.2.1
       displayName: 'Create Jira Ticket - GitHub Action Style'
-      condition: failed()
+      condition: or(eq(dependencies.Build.result, 'Failed'), eq(dependencies.Build.result, 'Canceled'))
       inputs:
         jiraUrl: $(jiraUrl)
         jiraEmail: $(jiraEmail)
@@ -195,6 +195,7 @@ stages:
       env:
         AI_API_KEY: $(aiApiKey)
         JIRA_PROJECT: $(jiraProject)
+      continueOnError: true
         
     - script: |
         pipelineiq analyze \
@@ -209,9 +210,12 @@ stages:
           --pipeline-name $(Build.DefinitionName) \
           --repository $(Build.Repository.Name) \
           --branch $(Build.SourceBranchName) \
-          --commit $(Build.SourceVersion)
+          --commit $(Build.SourceVersion) \
+          --build-number $(Build.BuildNumber) \
+          --stage-name $(System.StageDisplayName)
       displayName: 'Create Jira Ticket - CLI Style'
-      condition: failed()
+      condition: or(eq(dependencies.Build.result, 'Failed'), eq(dependencies.Build.result, 'Canceled'))
+      continueOnError: true
       env:
         JIRA_URL: $(jiraUrl)
         JIRA_EMAIL: $(jiraEmail)
