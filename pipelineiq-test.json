@@ -1,0 +1,20 @@
+{
+  "jira": {
+    "type": "cloud",
+    "baseUrl": "https://test.atlassian.net",
+    "email": "test@example.com",
+    "apiToken": "test-token",
+    "strictGDPR": true
+  },
+  "jiraProject": "SCRUM",
+  "issueType": "Bug",
+  "defaultLabels": ["ci-cd", "pipeline-failure", "automated"],
+  "ai": {
+    "mode": "disabled"
+  },
+  "dedup": {
+    "enabled": true,
+    "windowHours": 24
+  },
+  "maskSecrets": true
+}

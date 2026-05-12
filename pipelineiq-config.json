@@ -4,24 +4,22 @@
     "baseUrl": "${JIRA_URL}",
     "email": "${JIRA_EMAIL}",
     "apiToken": "${JIRA_TOKEN}",
-    "project": "SCRUM",
-    "issueType": "Bug",
     "strictGDPR": true
   },
+  "jiraProject": "SCRUM",
+  "issueType": "Bug",
+  "defaultLabels": ["ci-cd", "pipeline-failure", "automated"],
   "ai": {
     "mode": "assist",
     "provider": "openai",
     "apiKey": "${AI_API_KEY}",
-    "model": "gpt-4",
-    "temperature": 0.1,
-    "maxTokens": 4000,
-    "confidence": 0.7
+    "model": "gpt-4"
   },
   "dedup": {
     "enabled": true,
     "windowHours": 24
   },
-  "defaultLabels": ["ci-cd", "pipeline-failure", "automated"],
+  "maskSecrets": true,
   "severity": {
     "critical": ["security", "production-down"],
     "high": ["database", "api-failure"],

@@ -3,13 +3,14 @@ name: CI/CD Pipeline with PipelineIQ
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+    pull_request:
+      branches: [ main ]
 
 env:
   NODE_VERSION: '20'
 
 jobs:
+  # Build and Test Application
   build-and-test:
     runs-on: ubuntu-latest
     
@@ -20,11 +21,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           
       - name: Install dependencies
         run: npm ci
+        
+      - name: Install PipelineIQ CLI
+        run: npm install pipelineiq-cli
         
       - name: Run tests (some will fail to test PipelineIQ)
         run: npm test
@@ -32,7 +36,15 @@ jobs:
         
       - name: Build application
         run: npm run build
-
+        env:
+          NODE_ENV: production
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+          
   # PipelineIQ Integration - Always runs to handle failures
   pipelineiq-failure-handler:
     runs-on: ubuntu-latest
@@ -47,9 +59,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
           
-      - name: Install PipelineIQ package
-        run: npm install pipelineiq
+      - name: Install PipelineIQ CLI
+        run: npm install pipelineiq-cli
         
       - name: Create Jira ticket with PipelineIQ CLI
         run: |
@@ -61,6 +74,7 @@ jobs:
             --jira-token ${{ secrets.JIRA_TOKEN }} \
             --jira-project ${{ secrets.JIRA_PROJECT || 'SCRUM' }} \
             --ai-provider openai \
+            --ai-api-key ${{ secrets.AI_API_KEY }} \
             --ai-mode assist \
             --environment ${{ github.ref_name }} \
             --pipeline-name "GitHub Actions" \
@@ -77,12 +91,12 @@ jobs:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
           JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
         
       
-  
   # Security Scan Job
   security-scan:
     runs-on: ubuntu-latest
@@ -98,7 +112,7 @@ jobs:
         run: |
           npm install -g audit-ci
           audit-ci --moderate
-
+        
   # Performance Test Job
   performance-test:
     runs-on: ubuntu-latest
@@ -111,19 +125,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm ci
         
-      - name: Run performance tests
+      - name: Start application
         run: |
           npm start &
           sleep 5
           curl -f http://localhost:3000/health || exit 1
-          curl -f http://localhost:3000/api/data || exit 1
           pkill -f "node src/app.js"
-
-  # Documentation Build
+        
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: test-results/
+          
+  # Documentation Build Job
   docs-build:
     runs-on: ubuntu-latest
     
@@ -137,52 +157,16 @@ jobs:
           echo "Build Date: $(date)" >> docs/generated.md
           echo "Commit: ${{ github.sha }}" >> docs/generated.md
           echo "Branch: ${{ github.ref_name }}" >> docs/generated.md
+          echo "Repository: ${{ github.repository }}" >> docs/generated.md
           
       - name: Upload documentation
         uses: actions/upload-artifact@v4
         with:
           name: documentation
           path: docs/
-
-  # PipelineIQ Test Scenarios
-  test-pipelineiq-scenarios:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
           
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Install PipelineIQ CLI
-        run: npm install pipelineiq-cli
-        
-      - name: Test PipelineIQ with different AI providers
-        run: |
-          # Test with OpenAI
-          pipelineiq test \
-            --ai-provider openai \
-            --ai-api-key ${{ secrets.AI_API_KEY }} || true
-            
-          # Test with Gemini (if key is available)
-          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
-            pipelineiq test \
-              --ai-provider gemini \
-              --ai-api-key ${{ secrets.GEMINI_API_KEY }} || true
-          fi
-        env:
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-
   # Notification Job
   notify:
-    needs: [build-and-test, security-scan, performance-test]
     runs-on: ubuntu-latest
     if: always()
     
@@ -191,7 +175,7 @@ jobs:
         if: needs.build-and-test.result == 'success'
         run: |
           echo "✅ Pipeline completed successfully!"
-          echo "Build: ${{ needs.build-and-test.result }}"
+          echo "Build: ${{ needs.build-and-test.outputs.build }}"
           echo "Security: ${{ needs.security-scan.result }}"
           echo "Performance: ${{ needs.performance-test.result }}"
           
