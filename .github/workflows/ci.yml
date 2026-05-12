@@ -1,0 +1,243 @@
+name: CI/CD Pipeline with PipelineIQ
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run linting
+        run: npm run lint
+        
+      - name: Run unit tests
+        run: npm run test:unit
+        
+      - name: Run integration tests
+        run: npm run test:integration
+        
+      - name: Run failing tests (for PipelineIQ demo)
+        run: npm run test:fail
+        continue-on-error: true
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Deploy to staging
+        if: github.ref == 'refs/heads/develop'
+        run: npm run deploy
+        
+      - name: Deploy to production
+        if: github.ref == 'refs/heads/main'
+        run: npm run deploy
+
+  # PipelineIQ Integration - GitHub Actions Failure
+  pipelineiq-github-failure:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: failure() && needs.build-and-test.result == 'failure'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install PipelineIQ CLI
+        run: npm install -g @pipelineiq/cli
+        
+      - name: Create Jira ticket with PipelineIQ
+        uses: pipelineiq/action@github-action-v0.2.1
+        with:
+          jira-url: ${{ secrets.JIRA_URL }}
+          jira-email: ${{ secrets.JIRA_EMAIL }}
+          jira-token: ${{ secrets.JIRA_TOKEN }}
+          jira-project: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
+          issue-type: Bug
+          ai-mode: assist
+          ai-provider: openai
+          environment: ${{ github.ref_name }}
+          default-assignee: ${{ secrets.JIRA_ASSIGNEE }}
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
+
+  # PipelineIQ Integration - CLI Version
+  pipelineiq-cli-failure:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: failure() && needs.build-and-test.result == 'failure'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install PipelineIQ CLI
+        run: npm install -g @pipelineiq/cli
+        
+      - name: Analyze failure with PipelineIQ CLI
+        run: |
+          pipelineiq analyze \
+            --logs-path ./logs \
+            --config ./pipelineiq-config.json \
+            --jira-url ${{ secrets.JIRA_URL }} \
+            --jira-email ${{ secrets.JIRA_EMAIL }} \
+            --jira-token ${{ secrets.JIRA_TOKEN }} \
+            --jira-project ${{ secrets.JIRA_PROJECT || 'SCRUM' }} \
+            --ai-provider openai \
+            --environment ${{ github.ref_name }}
+        env:
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
+
+  # Security Scan Job
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run security audit
+        run: npm audit --audit-level high
+        
+      - name: Run dependency check
+        run: |
+          npm install -g audit-ci
+          audit-ci --moderate
+
+  # Performance Test Job
+  performance-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run performance tests
+        run: |
+          npm start &
+          sleep 5
+          curl -f http://localhost:3000/health || exit 1
+          curl -f http://localhost:3000/api/data || exit 1
+          pkill -f "node src/app.js"
+
+  # Documentation Build
+  docs-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Generate documentation
+        run: |
+          echo "# Generated Documentation" > docs/generated.md
+          echo "Build Date: $(date)" >> docs/generated.md
+          echo "Commit: ${{ github.sha }}" >> docs/generated.md
+          echo "Branch: ${{ github.ref_name }}" >> docs/generated.md
+          
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/
+
+  # PipelineIQ Test Scenarios
+  test-pipelineiq-scenarios:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install PipelineIQ CLI
+        run: npm install -g @pipelineiq/cli
+        
+      - name: Test PipelineIQ with different AI providers
+        run: |
+          # Test with OpenAI
+          pipelineiq test \
+            --ai-provider openai \
+            --ai-api-key ${{ secrets.AI_API_KEY }} || true
+            
+          # Test with Gemini (if key is available)
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+            pipelineiq test \
+              --ai-provider gemini \
+              --ai-api-key ${{ secrets.GEMINI_API_KEY }} || true
+          fi
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+  # Notification Job
+  notify:
+    needs: [build-and-test, security-scan, performance-test]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify on success
+        if: needs.build-and-test.result == 'success'
+        run: |
+          echo "✅ Pipeline completed successfully!"
+          echo "Build: ${{ needs.build-and-test.result }}"
+          echo "Security: ${{ needs.security-scan.result }}"
+          echo "Performance: ${{ needs.performance-test.result }}"
+          
+      - name: Notify on failure
+        if: needs.build-and-test.result == 'failure'
+        run: |
+          echo "❌ Pipeline failed!"
+          echo "Check PipelineIQ for Jira ticket creation"

@@ -1,0 +1,301 @@
+# Azure DevOps Pipeline with PipelineIQ Integration
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  tags:
+    include:
+      - v*
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  nodeVersion: '20'
+  environment: '$(Build.SourceBranchName)'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: 'Build and Test Stage'
+  jobs:
+  - job: BuildAndTest
+    displayName: 'Build and Test'
+    strategy:
+      matrix:
+        Node_18:
+          nodeVersion: '18'
+        Node_20:
+          nodeVersion: '20'
+    
+    steps:
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: $(nodeVersion)
+        
+    - script: |
+        npm ci
+      displayName: 'Install Dependencies'
+      
+    - script: |
+        npm run lint
+      displayName: 'Run Linting'
+      
+    - script: |
+        npm run test:unit
+      displayName: 'Run Unit Tests'
+      
+    - script: |
+        npm run test:integration
+      displayName: 'Run Integration Tests'
+      
+    - script: |
+        npm run test:fail || echo "Failing tests completed (expected)"
+      displayName: 'Run Failing Tests (PipelineIQ Demo)'
+      continueOnError: true
+      
+    - script: |
+        npm run build
+      displayName: 'Build Application'
+      
+    - script: |
+        npm start &
+        sleep 5
+        curl -f http://localhost:3000/health || exit 1
+        curl -f http://localhost:3000/api/data || exit 1
+        pkill -f "node src/app.js"
+      displayName: 'Health Check'
+      
+    - publish: '$(System.DefaultWorkingDirectory)/logs'
+      artifact: 'build-logs'
+      condition: failed()
+
+- stage: Security
+  displayName: 'Security Scan'
+  dependsOn: Build
+  condition: succeeded()
+  
+  jobs:
+  - job: SecurityScan
+    displayName: 'Security Scan'
+    
+    steps:
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: $(nodeVersion)
+        
+    - script: |
+        npm ci
+      displayName: 'Install Dependencies'
+      
+    - script: |
+        npm audit --audit-level high
+      displayName: 'Security Audit'
+      
+    - script: |
+        npm install -g audit-ci
+        audit-ci --moderate
+      displayName: 'Dependency Check'
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: [Build, Security]
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  
+  jobs:
+  - deployment: DeployToProduction
+    displayName: 'Deploy to Production'
+    environment: 'Production'
+    
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: NodeTool@0
+            displayName: 'Setup Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+              
+          - script: |
+              npm ci
+            displayName: 'Install Dependencies'
+            
+          - script: |
+              npm run deploy
+            displayName: 'Deploy Application'
+
+- stage: DeployStaging
+  displayName: 'Deploy to Staging'
+  dependsOn: [Build, Security]
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+  
+  jobs:
+  - deployment: DeployToStaging
+    displayName: 'Deploy to Staging'
+    environment: 'Staging'
+    
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: NodeTool@0
+            displayName: 'Setup Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+              
+          - script: |
+              npm ci
+            displayName: 'Install Dependencies'
+            
+          - script: |
+              npm run deploy
+            displayName: 'Deploy Application'
+
+# PipelineIQ Integration - Job for handling failures
+- stage: PipelineIQFailureHandler
+  displayName: 'PipelineIQ Failure Handler'
+  dependsOn: [Build, Security]
+  condition: failed()
+  
+  jobs:
+  - job: CreateJiraTicket
+    displayName: 'Create Jira Ticket with PipelineIQ'
+    
+    steps:
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: $(nodeVersion)
+        
+    - script: |
+        npm install -g @pipelineiq/cli
+      displayName: 'Install PipelineIQ CLI'
+      
+    - task: PipelineIQ@0.2.1
+      displayName: 'Create Jira Ticket - GitHub Action Style'
+      condition: failed()
+      inputs:
+        jiraUrl: $(jiraUrl)
+        jiraEmail: $(jiraEmail)
+        jiraToken: $(jiraToken)
+        jiraProject: $(jiraProject)
+        issueType: Bug
+        aiMode: assist
+        aiProvider: openai
+        environment: $(environment)
+        defaultAssignee: $(jiraAssignee)
+      env:
+        AI_API_KEY: $(aiApiKey)
+        JIRA_PROJECT: $(jiraProject)
+        
+    - script: |
+        pipelineiq analyze \
+          --logs-path $(Agent.BuildDirectory)/logs \
+          --config ./pipelineiq-config.json \
+          --jira-url $(jiraUrl) \
+          --jira-email $(jiraEmail) \
+          --jira-token $(jiraToken) \
+          --jira-project $(jiraProject) \
+          --ai-provider openai \
+          --environment $(environment) \
+          --pipeline-name $(Build.DefinitionName) \
+          --repository $(Build.Repository.Name) \
+          --branch $(Build.SourceBranchName) \
+          --commit $(Build.SourceVersion)
+      displayName: 'Create Jira Ticket - CLI Style'
+      condition: failed()
+      env:
+        JIRA_URL: $(jiraUrl)
+        JIRA_EMAIL: $(jiraEmail)
+        JIRA_TOKEN: $(jiraToken)
+        AI_API_KEY: $(aiApiKey)
+        JIRA_PROJECT: $(jiraProject)
+
+# Performance Testing Stage
+- stage: Performance
+  displayName: 'Performance Testing'
+  dependsOn: Build
+  condition: succeeded()
+  
+  jobs:
+  - job: PerformanceTest
+    displayName: 'Performance Test'
+    
+    steps:
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: $(nodeVersion)
+        
+    - script: |
+        npm ci
+      displayName: 'Install Dependencies'
+        
+    - script: |
+        npm start &
+        sleep 5
+        
+        # Performance tests
+        echo "Running performance tests..."
+        time curl -f http://localhost:3000/health
+        time curl -f http://localhost:3000/api/data
+        time curl -f http://localhost:3000/api/users
+        
+        pkill -f "node src/app.js"
+      displayName: 'Performance Tests'
+
+# Documentation Stage
+- stage: Documentation
+  displayName: 'Documentation'
+  dependsOn: Build
+  condition: succeeded()
+  
+  jobs:
+  - job: GenerateDocs
+    displayName: 'Generate Documentation'
+    
+    steps:
+    - script: |
+        mkdir -p docs
+        echo "# Generated Documentation" > docs/generated.md
+        echo "Build Date: $(date)" >> docs/generated.md
+        echo "Build Number: $(Build.BuildNumber)" >> docs/generated.md
+        echo "Commit: $(Build.SourceVersion)" >> docs/generated.md
+        echo "Branch: $(Build.SourceBranchName)" >> docs/generated.md
+        echo "Repository: $(Build.Repository.Name)" >> docs/generated.md
+      displayName: 'Generate Documentation'
+      
+    - publish: 'docs'
+      artifact: 'documentation'
+
+# Notification Stage
+- stage: Notification
+  displayName: 'Notifications'
+  dependsOn: [Build, Security, Deploy, DeployStaging, Performance]
+  condition: always()
+  
+  jobs:
+  - job: NotifyResults
+    displayName: 'Notify Pipeline Results'
+    
+    steps:
+    - script: |
+        echo "Pipeline Results:"
+        echo "Build: $[ stageDependencies.Build.result ]"
+        echo "Security: $[ stageDependencies.Security.result ]"
+        echo "Performance: $[ stageDependencies.Performance.result ]"
+        
+        if [ "$[ stageDependencies.Build.result ]" = "failed" ]; then
+          echo "❌ Pipeline failed! Check Jira for ticket creation."
+        else
+          echo "✅ Pipeline completed successfully!"
+        fi
+      displayName: 'Send Notifications'
