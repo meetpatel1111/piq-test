@@ -68,7 +68,7 @@ stages:
         versionSpec: $(nodeVersion)
         
     - script: |
-        npm install pipelineiq-cli
+        npm install pipelineiq@0.6.0
       displayName: 'Install PipelineIQ CLI'
       
             
@@ -80,7 +80,7 @@ stages:
           --jira-email $(jiraEmail) \
           --jira-token $(jiraToken) \
           --jira-project $(jiraProject) \
-          --ai-provider openai \
+          --ai-provider gemini \
           --ai-mode assist \
           --environment $(environment) \
           --pipeline-name $(Build.DefinitionName) \

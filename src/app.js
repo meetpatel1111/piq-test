@@ -1,6 +1,9 @@
 const express = require('express');
-// Failure in the code itself
-throw new Error('CRITICAL: Failed to initialize application core. Module "express" version mismatch or environment corruption.');
+// Simulation of a common startup error in CI/CD environments
+if (process.env.NODE_ENV === 'production' || process.env.CI) {
+  console.error("[FATAL] Dependency conflict detected in @pipelineiq/core-bridge");
+  throw new ReferenceError("PipelineIQConfig is not defined. Ensure that the core-bridge is properly initialized before starting the application.");
+}
 const axios = require('axios');
 const _ = require('lodash');
 
