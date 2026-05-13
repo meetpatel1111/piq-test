@@ -51,7 +51,11 @@ jobs:
         run: |
           npx pipelineiq analyze \
             --jira-project "SCRUM" \
+            --jira-email ${{ secrets.JIRA_EMAIL }} \
+            --jira-token ${{ secrets.JIRA_TOKEN }} \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
             --ai-mode assist \
+            --ai-api-key ${{ secrets.AI_API_KEY }} \
             --environment ${{ github.ref_name }} \
             --repository ${{ github.repository }} \
             --branch ${{ github.ref_name }} \
@@ -68,6 +72,7 @@ jobs:
             --api-url ${{ github.api_url }} \
             --job-name ${{ github.job }} \
             --repository-owner ${{ github.repository_owner }}
+            --format github-actions
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
