@@ -48,32 +48,12 @@ jobs:
     needs: build-and-test
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          
-      - name: Install PipelineIQ CLI
-        run: npm install pipelineiq
-        
-      - name: Create Jira ticket with PipelineIQ CLI
+      - name: Create Jira ticket with PipelineIQ
         run: |
-          pipelineiq analyze \
-            --logs-path ./logs \
-            --config ./pipelineiq-config.json \
-            --jira-url ${{ secrets.JIRA_URL }} \
-            --jira-email ${{ secrets.JIRA_EMAIL }} \
-            --jira-token ${{ secrets.JIRA_TOKEN }} \
-            --jira-project ${{ secrets.JIRA_PROJECT || 'SCRUM' }} \
-            --ai-provider openai \
-            --ai-api-key ${{ secrets.AI_API_KEY }} \
+          npx pipelineiq analyze \
+            --jira-project "SCRUM" \
             --ai-mode assist \
             --environment ${{ github.ref_name }} \
-            --pipeline-name "GitHub Actions" \
             --repository ${{ github.repository }} \
             --branch ${{ github.ref_name }} \
             --commit ${{ github.sha }} \
@@ -81,13 +61,16 @@ jobs:
             --run-id ${{ github.run_id }} \
             --run-number ${{ github.run_number }} \
             --actor ${{ github.actor }} \
+            --issue-type Bug \
             --event-name ${{ github.event_name }} \
-            --issue-type Bug
+            --run-attempt ${{ github.run_attempt }} \
+            --runner-os ${{ runner.os }} \
+            --runner-arch ${{ runner.arch }} \
+            --api-url ${{ github.api_url }}
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          JIRA_PROJECT: ${{ secrets.JIRA_PROJECT || 'SCRUM' }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true

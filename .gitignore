@@ -2,8 +2,8 @@
 node_modules/
 
 # Logs
-logs/
-*.log
+# logs/
+# *.log (temporarily commented for testing)
 
 # Environment variables
 .env
