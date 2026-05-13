@@ -57,7 +57,7 @@ jobs:
             --repository ${{ github.repository }} \
             --branch ${{ github.ref_name }} \
             --commit ${{ github.sha }} \
-            --workflow-name ${{ github.workflow }} \
+            --pipeline ${{ github.workflow }} \
             --run-id ${{ github.run_id }} \
             --run-number ${{ github.run_number }} \
             --actor ${{ github.actor }} \
@@ -66,7 +66,9 @@ jobs:
             --run-attempt ${{ github.run_attempt }} \
             --runner-os ${{ runner.os }} \
             --runner-arch ${{ runner.arch }} \
-            --api-url ${{ github.api_url }}
+            --api-url ${{ github.api_url }} \
+            --job-name ${{ github.job }} \
+            --repository-owner ${{ github.repository_owner }}
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
