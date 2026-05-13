@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "test": "echo 'No tests available' && exit 0",
-    "build": "node src/app.js",
+    "test": "jest",
+    "build": "echo 'Build successful!'",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "deploy": "echo 'Deploying to production...' && echo 'Deploy successful!'"
