@@ -94,15 +94,15 @@ nano .env
 ### 3. Test Configuration
 ```bash
 # Test Jira connection
-npx pipelineiq test \
+pipelineiq test \
   --jira-url $JIRA_URL \
   --jira-email $JIRA_EMAIL \
   --jira-token $JIRA_TOKEN
 
 # Test AI integration (optional)
-npx pipelineiq test \
+pipelineiq test \
   --ai-provider gemini \
-  --ai-model gemini-1.5-pro \
+  --ai-model gemini-2.5-pro \
   --ai-api-key $AI_API_KEY
 ```
 
@@ -181,7 +181,7 @@ When a pipeline fails, PipelineIQ will create a Jira ticket with:
   "ai": {
     "mode": "assist",               // disabled | assist | full
     "provider": "gemini",            // openai | anthropic | gemini
-    "model": "gemini-2.5-flash",    // AI model to use
+    "model": "gemini-2.5-pro",    // AI model to use
     "confidence": 0.7               // Minimum confidence threshold
   },
   "dedup": {

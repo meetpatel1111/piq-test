@@ -47,33 +47,36 @@ jobs:
     needs: build-and-test
     
     steps:
+      - name: Install PipelineIQ CLI
+        run: npm install -g pipelineiq
+
       - name: Create Jira ticket with PipelineIQ
         run: |
-          npx pipelineiq analyze \
-            --jira-url ${{ secrets.JIRA_URL }} \
+          pipelineiq analyze \
+            --jira-url "${{ secrets.JIRA_URL }}" \
             --jira-project "SCRUM" \
-            --jira-email ${{ secrets.JIRA_EMAIL }} \
-            --jira-token ${{ secrets.JIRA_TOKEN }} \
-            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --jira-email "${{ secrets.JIRA_EMAIL }}" \
+            --jira-token "${{ secrets.JIRA_TOKEN }}" \
+            --github-token "${{ secrets.GITHUB_TOKEN }}" \
             --ai-mode assist \
             --ai-provider gemini \
-            --ai-api-key ${{ secrets.AI_API_KEY }} \
-            --environment ${{ github.ref_name }} \
-            --repository ${{ github.repository }} \
-            --branch ${{ github.ref_name }} \
-            --commit ${{ github.sha }} \
-            --pipeline ${{ github.workflow }} \
-            --run-id ${{ github.run_id }} \
-            --run-number ${{ github.run_number }} \
-            --actor ${{ github.actor }} \
+            --ai-api-key "${{ secrets.AI_API_KEY }}" \
+            --environment "${{ github.ref_name }}" \
+            --repository "${{ github.repository }}" \
+            --branch "${{ github.ref_name }}" \
+            --commit "${{ github.sha }}" \
+            --pipeline "${{ github.workflow }}" \
+            --run-id "${{ github.run_id }}" \
+            --run-number "${{ github.run_number }}" \
+            --actor "${{ github.actor }}" \
             --issue-type Bug \
-            --event-name ${{ github.event_name }} \
-            --run-attempt ${{ github.run_attempt }} \
-            --runner-os ${{ runner.os }} \
-            --runner-arch ${{ runner.arch }} \
-            --api-url ${{ github.api_url }} \
-            --job-name ${{ github.job }} \
-            --repository-owner ${{ github.repository_owner }} \
+            --event-name "${{ github.event_name }}" \
+            --run-attempt "${{ github.run_attempt }}" \
+            --runner-os "${{ runner.os }}" \
+            --runner-arch "${{ runner.arch }}" \
+            --api-url "${{ github.api_url }}" \
+            --job-name "${{ github.job }}" \
+            --repository-owner "${{ github.repository_owner }}" \
             --format github-actions
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
