@@ -1,184 +1,56 @@
-# Azure DevOps Pipeline with PipelineIQ Integration
-
 trigger:
-  branches:
-    include:
-      - main
-      - develop
-  tags:
-    include:
-      - v*
-
-pr:
-  branches:
-    include:
-      - main
+  - main
+  - develop
 
 variables:
-  nodeVersion: '20'
-  environment: '$(Build.SourceBranchName)'
+  - name: nodeVersion
+    value: '20'
 
 pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-- stage: Build
-  displayName: 'Build and Test Stage'
-  jobs:
-  - job: BuildAndTest
+  - stage: BuildAndTest
     displayName: 'Build and Test'
-    
-    steps:
-    - task: NodeTool@0
-      displayName: 'Setup Node.js'
-      inputs:
-        versionSpec: '20'
-        
-    - script: |
-        npm ci
-      displayName: 'Install Dependencies'
-      
-    - script: |
-        npm test
-      displayName: 'Run Tests (some will fail)'
-      continueOnError: true
-      
-    - script: |
-        npm run build
-      displayName: 'Build Application'
-      
-    - publish: '$(System.DefaultWorkingDirectory)/logs'
-      artifact: 'build-logs'
-      condition: failed()
+    jobs:
+      - job: Test
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+          
+          - script: npm ci
+            displayName: 'Install dependencies'
+          
+          - script: npm test
+            displayName: 'Run Tests'
+            continueOnError: true
 
-# PipelineIQ Integration - Job for handling failures
-- stage: PipelineIQFailureHandler
-  displayName: 'PipelineIQ Failure Handler'
-  dependsOn: Build
-  condition: always()
-  
-  jobs:
-  - job: CreateJiraTicket
-    displayName: 'Create Jira Ticket with PipelineIQ'
-    
-    steps:
-    - task: NodeTool@0
-      displayName: 'Setup Node.js'
-      inputs:
-        versionSpec: $(nodeVersion)
-        
-    - script: |
-        npm install pipelineiq@0.7.0
-      displayName: 'Install PipelineIQ CLI'
-      
-            
-    - script: |
-        pipelineiq analyze \
-          --logs-path $(Agent.BuildDirectory)/logs \
-          --config ./pipelineiq-config.json \
-          --jira-url $(jiraUrl) \
-          --jira-email $(jiraEmail) \
-          --jira-token $(jiraToken) \
-          --jira-project $(jiraProject) \
-          --ai-provider gemini \
-          --ai-mode assist \
-          --environment $(environment) \
-          --pipeline-name $(Build.DefinitionName) \
-          --repository $(Build.Repository.Name) \
-          --branch $(Build.SourceBranchName) \
-          --commit $(Build.SourceVersion) \
-          --build-number $(Build.BuildNumber) \
-          --stage-name $(System.StageDisplayName) \
-          --build-id $(Build.BuildId) \
-          --requested-by $(Build.RequestedFor) \
-          --issue-type Bug
-      displayName: 'Create Jira Ticket with PipelineIQ CLI'
-      condition: or(eq(dependencies.Build.result, 'Failed'), eq(dependencies.Build.result, 'Canceled'))
-      continueOnError: true
-      env:
-        JIRA_URL: $(jiraUrl)
-        JIRA_EMAIL: $(jiraEmail)
-        JIRA_TOKEN: $(jiraToken)
-        AI_API_KEY: $(aiApiKey)
-        JIRA_PROJECT: $(jiraProject)
-
-# Performance Testing Stage
-- stage: Performance
-  displayName: 'Performance Testing'
-  dependsOn: Build
-  condition: succeeded()
-  
-  jobs:
-  - job: PerformanceTest
-    displayName: 'Performance Test'
-    
-    steps:
-    - task: NodeTool@0
-      displayName: 'Setup Node.js'
-      inputs:
-        versionSpec: $(nodeVersion)
-        
-    - script: |
-        npm ci
-      displayName: 'Install Dependencies'
-        
-    - script: |
-        npm start &
-        sleep 5
-        
-        # Performance tests
-        echo "Running performance tests..."
-        time curl -f http://localhost:3000/health
-        time curl -f http://localhost:3000/api/data
-        time curl -f http://localhost:3000/api/users
-        
-        pkill -f "node src/app.js"
-      displayName: 'Performance Tests'
-
-# Documentation Stage
-- stage: Documentation
-  displayName: 'Documentation'
-  dependsOn: Build
-  condition: succeeded()
-  
-  jobs:
-  - job: GenerateDocs
-    displayName: 'Generate Documentation'
-    
-    steps:
-    - script: |
-        mkdir -p docs
-        echo "# Generated Documentation" > docs/generated.md
-        echo "Build Date: $(date)" >> docs/generated.md
-        echo "Build Number: $(Build.BuildNumber)" >> docs/generated.md
-        echo "Commit: $(Build.SourceVersion)" >> docs/generated.md
-        echo "Branch: $(Build.SourceBranchName)" >> docs/generated.md
-        echo "Repository: $(Build.Repository.Name)" >> docs/generated.md
-      displayName: 'Generate Documentation'
-      
-    - publish: 'docs'
-      artifact: 'documentation'
-
-# Notification Stage
-- stage: Notification
-  displayName: 'Notifications'
-  dependsOn: [Build, Security, Deploy, DeployStaging, Performance]
-  condition: always()
-  
-  jobs:
-  - job: NotifyResults
-    displayName: 'Notify Pipeline Results'
-    
-    steps:
-    - script: |
-        echo "Pipeline Results:"
-        echo "Build: $[ stageDependencies.Build.result ]"
-        echo "Security: $[ stageDependencies.Security.result ]"
-        echo "Performance: $[ stageDependencies.Performance.result ]"
-        
-        if [ "$[ stageDependencies.Build.result ]" = "failed" ]; then
-          echo "❌ Pipeline failed! Check Jira for ticket creation."
-        else
-          echo "✅ Pipeline completed successfully!"
-        fi
-      displayName: 'Send Notifications'
+  - stage: PipelineIQ
+    displayName: 'PipelineIQ Analysis'
+    dependsOn: BuildAndTest
+    condition: failed()
+    jobs:
+      - job: Analyze
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(nodeVersion)
+          
+          - script: npm install -g pipelineiq
+            displayName: 'Install PipelineIQ CLI'
+          
+          - script: |
+              pipelineiq analyze \
+                --jira-url $(jiraUrl) \
+                --jira-email $(jiraEmail) \
+                --jira-token $(jiraToken) \
+                --jira-project $(jiraProject) \
+                --ai-provider gemini \
+                --ai-model gemini-2.5-flash-lite \
+                --ai-api-key $(aiApiKey) \
+                --environment testing \
+                --format azure-devops
+            displayName: 'Run PipelineIQ Analysis'
+            env:
+              AI_API_KEY: $(aiApiKey)

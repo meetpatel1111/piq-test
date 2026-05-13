@@ -1,40 +1,30 @@
 {
   "name": "piq-test",
   "version": "1.0.0",
-  "description": "PipelineIQ testing repository with sample CI/CD pipelines",
-  "main": "src/app.js",
+  "description": "PipelineIQ Production-Grade Test Suite",
+  "type": "module",
   "scripts": {
-    "start": "node src/app.js",
-    "test": "jest",
-    "build": "echo 'Build successful!'",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
-    "deploy": "echo 'Deploying to production...' && echo 'Deploy successful!'"
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "build": "tsup src/index.ts --format esm --outDir dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "express": "^4.18.2",
-    "lodash": "^4.17.21"
+    "express": "^4.19.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "eslint": "^8.55.0",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.0",
-    "supertest": "^6.3.0"
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "@types/supertest": "^6.0.2",
+    "tsx": "^4.7.2",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.0"
   },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "keywords": [
-    "pipelineiq",
-    "ci-cd",
-    "testing",
-    "github-actions",
-    "azure-devops",
-    "jira"
-  ],
-  "author": "PipelineIQ Team",
+  "author": "Meetkumar Patel <pmeet464@gmail.com>",
   "license": "MIT"
 }

@@ -1,31 +1,8 @@
-# Dependencies
 node_modules/
-
-# Logs
-# logs/
-# *.log (temporarily commented for testing)
-
-# Environment variables
-.env
-.env.local
-.env.production
-
-# Coverage reports
-coverage/
-*.lcov
-
-# Build outputs
 dist/
-build/
-
-# IDE files
-.vscode/
-.idea/
-
-# OS files
+.env
+logs/
+*.log
 .DS_Store
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
+.vscode/
+coverage/

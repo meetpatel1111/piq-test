@@ -60,6 +60,7 @@ jobs:
             --github-token ${{ secrets.GITHUB_TOKEN }} \
             --ai-mode assist \
             --ai-provider gemini \
+            --ai-model gemini-2.5-flash-lite \
             --ai-api-key ${{ secrets.AI_API_KEY }} \
             --environment ${{ github.ref_name }} \
             --repository ${{ github.repository }} \
@@ -108,7 +109,7 @@ jobs:
           npm start &
           sleep 5
           curl -f http://localhost:3000/health || exit 1
-          pkill -f "node src/app.js"
+          pkill -f "node dist/index.js"
         
       - name: Upload test results
         uses: actions/upload-artifact@v4
