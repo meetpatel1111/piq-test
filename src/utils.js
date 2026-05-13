@@ -128,6 +128,15 @@ function recursiveFunction(depth) {
   return depth + recursiveFunction(depth - 1);
 }
 
+// Function that will fail if metadata is missing
+function transformObject(obj) {
+  return {
+    id: obj.id,
+    name: obj.name.toUpperCase(),
+    tags: obj.metadata.tags.map(t => t.toLowerCase())
+  };
+}
+
 module.exports = {
   processData,
   calculateMetrics,
@@ -136,5 +145,6 @@ module.exports = {
   processLargeDataset,
   validateUser,
   findPrimes,
-  recursiveFunction
+  recursiveFunction,
+  transformObject
 };

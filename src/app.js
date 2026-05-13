@@ -1,4 +1,6 @@
 const express = require('express');
+// Failure in the code itself
+throw new Error('CRITICAL: Failed to initialize application core. Module "express" version mismatch or environment corruption.');
 const axios = require('axios');
 const _ = require('lodash');
 
