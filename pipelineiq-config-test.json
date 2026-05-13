@@ -11,9 +11,9 @@
   "defaultLabels": ["ci-cd", "pipeline-failure", "automated"],
   "ai": {
     "mode": "assist",
-    "provider": "openai",
+    "provider": "gemini",
     "apiKey": "***",
-    "model": "gpt-4"
+    "model": "gemini-2.5-flash"
   },
   "dedup": {
     "enabled": true,

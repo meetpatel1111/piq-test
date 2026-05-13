@@ -24,7 +24,7 @@ piq-test/
 │   └── integration.test.js   # Integration tests
 ├── .github/
 │   └── workflows/
-│       └── ci.yml            # GitHub Actions workflow
+│       └── ci-new.yml        # GitHub Actions workflow
 ├── azure-pipelines.yml       # Azure DevOps pipeline
 ├── pipelineiq-config.json     # PipelineIQ configuration
 ├── .env.example              # Environment variables template
