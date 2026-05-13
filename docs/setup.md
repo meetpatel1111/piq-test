@@ -102,6 +102,7 @@ npx pipelineiq test \
 # Test AI integration (optional)
 npx pipelineiq test \
   --ai-provider gemini \
+  --ai-model gemini-1.5-pro \
   --ai-api-key $AI_API_KEY
 ```
 

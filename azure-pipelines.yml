@@ -68,7 +68,7 @@ stages:
         versionSpec: $(nodeVersion)
         
     - script: |
-        npm install pipelineiq@0.6.0
+        npm install pipelineiq@0.6.1
       displayName: 'Install PipelineIQ CLI'
       
             
