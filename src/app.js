@@ -1,6 +1,7 @@
-const express = require('express');
-const axios = require('axios');
-const _ = require('lodash');
+import express from 'express';
+import axios from 'axios';
+import _ from 'lodash';
+import * as utils from './utils.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -92,6 +93,60 @@ app.get('/api/protected', (req, res) => {
   });
 });
 
+const memoryLeakArray = [];
+
+// Endpoint that simulates a memory leak
+app.get('/api/leak', (req, res) => {
+  const { size = 10000 } = req.query;
+  const chunk = new Array(parseInt(size)).fill('leak');
+  memoryLeakArray.push(chunk);
+  
+  res.json({ 
+    message: 'Memory leaked successfully', 
+    currentLeakSize: memoryLeakArray.length,
+    totalElements: memoryLeakArray.length * parseInt(size)
+  });
+});
+
+// Failure Lab - explore different kinds of failures
+app.get('/api/failure-lab', async (req, res) => {
+  const { type } = req.query;
+
+  try {
+    switch (type) {
+      case 'rate_limit':
+        await utils.callExternalApiWithRateLimit();
+        break;
+      case 'permission': {
+        const os = await import('os');
+        const isWin = os.platform() === 'win32';
+        const path = isWin ? 'C:\\Windows\\system32\\config.sys' : '/etc/shadow';
+        utils.writeSystemLog(path, 'test');
+        break;
+      }
+      case 'circular':
+        utils.serializeConfig({});
+        break;
+      case 'init':
+        utils.initializeService(null);
+        break;
+      case 'unhandled':
+        // Trigger an unhandled rejection
+        new Promise((_, reject) => reject(new Error('This is an unhandled promise rejection')));
+        return res.json({ message: 'Unhandled rejection triggered' });
+      default:
+        return res.json({ message: 'Select a failure type: rate_limit, permission, circular, init, unhandled' });
+    }
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      success: false,
+      error: error.name || 'FailureLabError',
+      message: error.message,
+      code: error.code
+    });
+  }
+});
+
 // Error simulation endpoint
 app.post('/api/simulate-error', (req, res) => {
   const { errorType } = req.body;
@@ -148,4 +203,4 @@ app.listen(PORT, () => {
   console.log(`  POST /api/simulate-error - Simulate various errors`);
 });
 
-module.exports = app;
+export default app;

@@ -137,7 +137,53 @@ function transformObject(obj) {
   };
 }
 
-module.exports = {
+// Function that simulates an external API rate limit (HTTP 429)
+async function callExternalApiWithRateLimit(retryCount = 0) {
+  if (retryCount < 3) {
+    const error = new Error('Too Many Requests');
+    error.status = 429;
+    error.headers = { 'retry-after': '30' };
+    throw error;
+  }
+  return { success: true, data: 'Final success after retries' };
+}
+
+// Function that simulates a filesystem permission error (Platform Agnostic)
+function writeSystemLog(path, content) {
+  const isProtectedPath = 
+    path.startsWith('/etc') || 
+    path.startsWith('/root') || 
+    path.startsWith('/var/log') ||
+    path.startsWith('C:\\Windows') || 
+    path.startsWith('C:\\Program Files');
+
+  if (isProtectedPath) {
+    const error = new Error(`EACCES: permission denied, open '${path}'`);
+    error.code = 'EACCES';
+    error.errno = -13;
+    throw error;
+  }
+  return `Log written to ${path}`;
+}
+
+// Function that causes a circular reference error during JSON serialization
+function serializeConfig(config) {
+  const circular = { name: 'circular' };
+  circular.self = circular;
+  
+  // This will throw "Converting circular structure to JSON"
+  return JSON.stringify(circular);
+}
+
+// Function that simulates a dependency injection failure
+function initializeService(config) {
+  if (!config || !config.apiKey) {
+    throw new Error('ServiceInitializationError: Missing required API key in configuration. Check your environment variables.');
+  }
+  return { initialized: true };
+}
+
+export {
   processData,
   calculateMetrics,
   parseConfig,
@@ -146,5 +192,9 @@ module.exports = {
   validateUser,
   findPrimes,
   recursiveFunction,
-  transformObject
+  transformObject,
+  callExternalApiWithRateLimit,
+  writeSystemLog,
+  serializeConfig,
+  initializeService
 };
