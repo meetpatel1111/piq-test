@@ -28,3 +28,8 @@
   "author": "Meetkumar Patel <pmeet464@gmail.com>",
   "license": "MIT"
 }
+  "devDependencies": {
+    "supertest": "^7.0.0",
+    "vitest": "^1.6.1"
+  }
+}
