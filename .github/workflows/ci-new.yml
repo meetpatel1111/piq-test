@@ -78,7 +78,8 @@ jobs:
             --api-url ${{ github.api_url }} \
             --job-name ${{ github.job }} \
             --repository-owner ${{ github.repository_owner }} \
-            --format github-actions
+            --format github-actions \
+            --self-heal
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
