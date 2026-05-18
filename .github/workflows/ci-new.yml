@@ -51,6 +51,11 @@ jobs:
     needs: build-and-test
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches full history for high-fidelity RCA and git context
+
       - name: Install PipelineIQ CLI
         run: npm install -g pipelineiq
 
@@ -61,7 +66,7 @@ jobs:
             --jira-project "SCRUM" \
             --jira-email ${{ secrets.JIRA_EMAIL }} \
             --jira-token ${{ secrets.JIRA_TOKEN }} \
-            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --github-token ${{ github.token }} \
             --ai-mode assist \
             --ai-provider gemini \
             --ai-model gemini-2.5-flash-lite \
@@ -70,7 +75,7 @@ jobs:
             --repository ${{ github.repository }} \
             --branch ${{ github.ref_name }} \
             --commit ${{ github.sha }} \
-            --pipeline ${{ github.workflow }} \
+            --pipeline "${{ github.workflow }}" \
             --run-id ${{ github.run_id }} \
             --run-number ${{ github.run_number }} \
             --actor ${{ github.actor }} \
@@ -89,7 +94,7 @@ jobs:
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
                 
   # Performance Test Job
