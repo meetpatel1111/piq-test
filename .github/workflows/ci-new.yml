@@ -66,7 +66,7 @@ jobs:
             --jira-project "SCRUM" \
             --jira-email ${{ secrets.JIRA_EMAIL }} \
             --jira-token ${{ secrets.JIRA_TOKEN }} \
-            --github-token ${{ github.token }} \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
             --ai-mode assist \
             --ai-provider gemini \
             --ai-model gemini-2.5-flash-lite \
@@ -94,7 +94,7 @@ jobs:
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
                 
   # Performance Test Job
