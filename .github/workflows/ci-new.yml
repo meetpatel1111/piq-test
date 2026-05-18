@@ -51,11 +51,6 @@ jobs:
     needs: build-and-test
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetches full history for high-fidelity RCA and git context
-
       - name: Install PipelineIQ CLI
         run: npm install -g pipelineiq
 
