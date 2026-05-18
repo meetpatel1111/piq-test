@@ -70,7 +70,7 @@ jobs:
             --repository ${{ github.repository }} \
             --branch ${{ github.ref_name }} \
             --commit ${{ github.sha }} \
-            --pipeline "${{ github.workflow }}" \
+            --pipeline ${{ github.workflow }} \
             --run-id ${{ github.run_id }} \
             --run-number ${{ github.run_number }} \
             --actor ${{ github.actor }} \
