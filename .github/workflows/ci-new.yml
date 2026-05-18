@@ -83,7 +83,18 @@ jobs:
             --job-name ${{ github.job }} \
             --repository-owner ${{ github.repository_owner }} \
             --format github-actions \
-            --self-heal
+            --self-heal \
+            --self-heal-confidence 0.8 \
+            --self-heal-max-files 10 \
+            --self-heal-max-lines 200 \
+            --self-heal-draft \
+            --self-heal-reviewers "meetpatel1111" \
+            --self-heal-labels "self-healed,automated" \
+            --self-heal-categories "build,test,lint" \
+            --self-heal-verify \
+            --self-heal-verification-commands "npm install,npm run build" \
+            --self-heal-auto-lockfile \
+            --dedup-window 24
         env:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
