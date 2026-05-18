@@ -1,0 +1,5 @@
+- name: Run npm ci
+  run: npm ci
+- name: Build application
+  run: npm run build
+- name: Run npm start &
