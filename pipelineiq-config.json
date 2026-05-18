@@ -1,46 +1,38 @@
 {
+  "project": {
+    "name": "piq-test",
+    "owner": "Meetkumar Patel",
+    "version": "1.0.0"
+  },
   "jira": {
-    "type": "cloud",
-    "baseUrl": "${JIRA_URL}",
-    "email": "${JIRA_EMAIL}",
-    "apiToken": "${JIRA_TOKEN}",
-    "strictGDPR": true
+    "project": "SCRUM",
+    "issueType": "Bug",
+    "priority": "Medium",
+    "labels": ["pipelineiq", "automated-failure"]
   },
-  "jiraProject": "SCRUM",
-  "issueType": "Bug",
-  "defaultLabels": ["ci-cd", "pipeline-failure", "automated"],
   "ai": {
-    "mode": "assist",
     "provider": "gemini",
-    "apiKey": "${AI_API_KEY}",
-    "model": "gemini-2.5-flash"
+    "model": "gemini-2.5-flash-lite",
+    "mode": "assist",
+    "enrichment": {
+      "rca": true,
+      "remediation": true,
+      "severity": true
+    }
   },
-  "dedup": {
-    "enabled": true,
-    "windowHours": 24
+  "analysis": {
+    "logAggregation": true,
+    "maxLogLines": 1000,
+    "deduplication": true,
+    "deduplicationWindow": 24
   },
-  "maskSecrets": true,
-  "severity": {
-    "critical": ["security", "production-down"],
-    "high": ["database", "api-failure"],
-    "medium": ["test-failure", "build-error"],
-    "low": ["linting", "warning"]
-  },
-  "customFields": {
-    "repository": "customfield_10010",
-    "branch": "customfield_10011",
-    "commit": "customfield_10012",
-    "pipeline": "customfield_10013",
-    "environment": "customfield_10014"
-  },
-  "notifications": {
-    "slack": {
-      "enabled": false,
-      "webhook": "${SLACK_WEBHOOK}"
-    },
-    "teams": {
-      "enabled": false,
-      "webhook": "${TEAMS_WEBHOOK}"
+  "environments": {
+    "testing": {
+      "severityMapping": {
+        "Critical": "High",
+        "Error": "Medium",
+        "Warning": "Low"
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-# PipelineIQ Testing Repository Setup Guide
+# PipelineIQ Testing Repository Setup Guide (v0.8.0)
 
 This guide will help you set up the PipelineIQ testing repository with both GitHub Actions and Azure DevOps pipelines.
 
@@ -21,7 +21,7 @@ Go to your repository → Settings → Secrets and variables → Actions
 | `JIRA_EMAIL` | `your-email@company.com` | ✅ Yes |
 | `JIRA_TOKEN` | `atatt3xfgf0...` | ✅ Yes |
 | `JIRA_PROJECT` | `DEVOPS` (or your project key) | ✅ Yes |
-| `JIRA_ASSIGNEE` | `user123` (Jira user ID) | ⚪ Optional |
+| `JIRA_ASSIGNEE` | `5f123456...` (Jira account ID) | ⚪ Optional |
 | `AI_API_KEY` | `sk-...your-openai-key` | ⚪ Optional |
 | `GEMINI_API_KEY` | `AIzaSy...your-gemini-key` | ⚪ Optional |
 
@@ -34,7 +34,7 @@ Go to your project → Pipelines → Library → Variable groups
 | `jiraEmail` | `your-email@company.com` | ✅ Yes |
 | `jiraToken` | `atatt3xfgf0...` | ✅ Yes |
 | `jiraProject` | `DEVOPS` | ✅ Yes |
-| `jiraAssignee` | `user123` | ⚪ Optional |
+| `jiraAssignee` | `5f123456...` | ⚪ Optional |
 | `aiApiKey` | `sk-...your-openai-key` | ✅ Yes |
 | `geminiApiKey` | `AIzaSy...your-gemini-key` | ⚪ Optional |
 
@@ -102,7 +102,7 @@ pipelineiq test \
 # Test AI integration (optional)
 pipelineiq test \
   --ai-provider gemini \
-  --ai-model gemini-2.5-pro \
+  --ai-model gemini-2.5-flash-lite \
   --ai-api-key $AI_API_KEY
 ```
 
@@ -111,10 +111,8 @@ pipelineiq test \
 # Run all tests (some will fail to test PipelineIQ)
 npm test
 
-# Run specific test suites
-npm run test:unit
-npm run test:integration
-npm run test:fail  # This will fail and trigger PipelineIQ
+# Run in watch mode
+npm run test:watch
 ```
 
 ## 🔄 Testing PipelineIQ
@@ -181,7 +179,7 @@ When a pipeline fails, PipelineIQ will create a Jira ticket with:
   "ai": {
     "mode": "assist",               // disabled | assist | full
     "provider": "gemini",            // openai | anthropic | gemini
-    "model": "gemini-2.5-pro",    // AI model to use
+    "model": "gemini-2.5-flash-lite",    // AI model to use
     "confidence": 0.7               // Minimum confidence threshold
   },
   "dedup": {

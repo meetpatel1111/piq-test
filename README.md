@@ -1,112 +1,57 @@
-# PipelineIQ Testing Repository
+# PipelineIQ Production-Grade Test Suite (v0.8.0)
 
-This repository demonstrates PipelineIQ integration with both GitHub Actions and Azure DevOps pipelines.
+This repository serves as the official demonstration and testing ground for **PipelineIQ**. It features a modern TypeScript application with intentional "failure injection" points to showcase PipelineIQ's AI-driven root cause analysis and remediation capabilities.
 
-## 🚀 What's Included
+## 🚀 Key Features
 
-- **Sample Node.js Application** - Simple web app with tests
-- **GitHub Actions Workflow** - CI/CD pipeline with PipelineIQ integration
-- **Azure DevOps Pipeline** - Equivalent pipeline for Azure DevOps
-- **PipelineIQ Configuration** - Ready-to-use configuration files
-- **Test Scenarios** - Various failure scenarios to test PipelineIQ
+- **Unstable API**: A Node.js/Express server with endpoints designed to simulate common CI/CD failure scenarios (Validation errors, Logic errors, Infrastructure outages).
+- **TypeScript & Vitest**: Built with modern tooling for type safety and fast test execution.
+- **Dual-Platform CI/CD**: Integrated with both **GitHub Actions** and **Azure DevOps** using production-standard pipeline configurations.
 
-## 📁 Repository Structure
+## 📁 Project Structure
 
 ```
 piq-test/
-├── README.md                 # This file
-├── package.json              # Node.js project setup
 ├── src/
-│   ├── app.js                # Simple Express app
-│   └── utils.js              # Utility functions
+│   └── index.ts          # Express API with intentional failure modes
 ├── tests/
-│   ├── app.test.js           # Unit tests
-│   └── integration.test.js   # Integration tests
-├── .github/
-│   └── workflows/
-│       └── ci-new.yml        # GitHub Actions workflow
-├── azure-pipelines.yml       # Azure DevOps pipeline
-├── pipelineiq-config.json     # PipelineIQ configuration
-├── .env.example              # Environment variables template
-└── docs/
-    ├── setup.md              # Setup instructions
-    └── testing.md            # Testing guide
+│   └── api.test.ts       # Test suite designed to trigger PipelineIQ
+├── package.json          # Modern TS + Vitest configuration
+├── pipelineiq-config.json # Optimized configuration for v0.8.0
+├── azure-pipelines.yml   # Production-ready Azure DevOps pipeline
+└── .github/
+    └── workflows/
+        └── ci.yml        # Production-ready GitHub Actions workflow
 ```
 
-## 🎯 Testing PipelineIQ
+## 🧪 Failure Scenarios for PipelineIQ
 
-### GitHub Actions
-1. Fork this repository
-2. Add required secrets (see setup.md)
-3. Push changes to trigger the workflow
-4. Intentionally break tests to see PipelineIQ in action
+1. **Division by Zero**: Triggers a logic error in the calculator API. PipelineIQ will analyze the stack trace and suggest a fix.
+2. **Database Outage Simulation**: Triggers a `503 Service Unavailable` response. PipelineIQ will recognize this as an infrastructure issue.
+3. **Zod Validation Failure**: Triggers a `400 Bad Request`. PipelineIQ will identify the malformed payload in the logs.
 
-### Azure DevOps
-1. Import this repository into Azure DevOps
-2. Create pipeline using azure-pipelines.yml
-3. Configure variable group with secrets
-4. Run pipeline and test failure scenarios
-
-## 🔧 Required Secrets
-
-### GitHub Actions
-- `JIRA_URL` - Your Jira instance URL
-- `JIRA_EMAIL` - Jira service account email
-- `JIRA_TOKEN` - Jira API token
-- `AI_API_KEY` - OpenAI/Gemini API key (optional)
-
-### Azure DevOps
-- `jiraUrl` - Your Jira instance URL
-- `jiraEmail` - Jira service account email
-- `jiraToken` - Jira API token
-- `aiApiKey` - OpenAI/Gemini API key (optional)
-
-## 🧪 Test Scenarios
-
-1. **Unit Test Failure** - Broken unit tests
-2. **Integration Test Failure** - Database connection issues
-3. **Build Failure** - Syntax errors, missing dependencies
-4. **Linting Failure** - Code quality issues
-5. **Security Scan Failure** - Vulnerability detection
-
-## 📊 Expected Results
-
-Each failure should create a Jira ticket with:
-- ✅ AI-powered root cause analysis
-- ✅ Step-by-step remediation instructions
-- ✅ Proper severity and priority classification
-- ✅ Links to commit, branch, and pipeline run
-- ✅ Relevant labels and assignee suggestions
-
-## 🚀 Quick Start
+## 🛠 Getting Started
 
 ```bash
-# Clone and setup
-git clone https://github.com/your-org/piq-test.git
-cd piq-test
+# Install dependencies
 npm install
 
-# Run tests (some will fail to demonstrate PipelineIQ)
-npm test
+# Run the API locally
+npm run dev
 
-# Check PipelineIQ configuration
-cat pipelineiq-config.json
+# Run tests (some are designed to fail for PipelineIQ testing)
+npm test
 ```
 
-## 📚 Documentation
+## 🛰 CI/CD Integration
 
-- [Setup Guide](docs/setup.md) - Complete setup instructions
-- [Testing Guide](docs/testing.md) - How to test different scenarios
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+This repository is pre-configured to run PipelineIQ automatically on failures:
 
-## 🤝 Contributing
+### GitHub Actions
+The workflow in `.github/workflows/ci.yml` uses the official PipelineIQ GitHub Action.
 
-This is a testing repository. Feel free to:
-- Add new test scenarios
-- Improve documentation
-- Report issues with PipelineIQ integration
-- Share your experience
+### Azure DevOps
+The pipeline in `azure-pipelines.yml` uses the PipelineIQ CLI to analyze failed builds.
 
 ---
-
-**PipelineIQ** - Transforming CI/CD failures into operational intelligence.
+**Maintained by Meetkumar Patel <pmeet464@gmail.com>**
