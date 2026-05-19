@@ -32,3 +32,9 @@
   "author": "Meetkumar Patel <pmeet464@gmail.com>",
   "license": "MIT"
 }
+
+  "dependencies": {
+    "@types/node": "^20.11.24",
+    "tsup": "^8.0.2",
+    "zod": "^3.22.4"
+  }
