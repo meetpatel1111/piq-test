@@ -1,5 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
+import * as mathUtils from './mathUtils.js';
+import * as dataManager from './dataManager.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -42,10 +44,10 @@ app.post('/api/calculate', (req: express.Request, res: express.Response) => {
     let result = 0;
     switch (operation) {
       case 'add':
-        result = a + b;
+        result = mathUtils.add(a, b);
         break;
       case 'subtract':
-        result = a - b;
+        result = mathUtils.subtract(a, b);
         break;
       case 'multiply':
         result = a * b;
@@ -57,7 +59,7 @@ app.post('/api/calculate', (req: express.Request, res: express.Response) => {
             message: 'Division by zero is not allowed' 
           });
         }
-        result = a / b;
+        result = mathUtils.divide(a, b);
         break;
     }
 
@@ -86,6 +88,20 @@ app.get('/api/data', (req: express.Request, res: express.Response) => {
     source: 'database',
     timestamp: new Date().toISOString()
   });
+});
+
+// Users endpoint - formats active users summary
+app.get('/api/users', (req: express.Request, res: express.Response) => {
+  try {
+    const activeUsers = dataManager.getActiveUsers();
+    const summary = dataManager.formatUsersSummary(activeUsers);
+    res.json({
+      summary,
+      count: activeUsers.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'InternalServerError', message: (error as Error).message });
+  }
 });
 
 app.listen(port, () => {
