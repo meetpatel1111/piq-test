@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 const app = express();
 const port = process.env.PORT || 3000;
+const invalidSyntax = ;
 
 app.use(express.json());
 
