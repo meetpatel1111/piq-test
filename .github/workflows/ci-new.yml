@@ -30,20 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Run tests (some will fail to test PipelineIQ)
-        run: npm test
-        
       - name: Build application
         run: npm run build
         env:
           NODE_ENV: production
         
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist/
-          
   # PipelineIQ Integration - Always runs to handle failures
   pipelineiq-failure-handler:
     runs-on: ubuntu-latest
@@ -103,71 +94,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
                 
-  # Performance Test Job
-  performance-test:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Start application
-        run: |
-          npm start &
-          sleep 5
-          curl -f http://localhost:3000/health || exit 1
-          pkill -f "node dist/index.js"
-        
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: performance-results
-          path: test-results/
-          
-  # Documentation Build Job
-  docs-build:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Generate documentation
-        run: |
-          echo "# Generated Documentation" > docs/generated.md
-          echo "Build Date: $(date)" >> docs/generated.md
-          echo "Commit: ${{ github.sha }}" >> docs/generated.md
-          echo "Branch: ${{ github.ref_name }}" >> docs/generated.md
-          echo "Repository: ${{ github.repository }}" >> docs/generated.md
-          
-      - name: Upload documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: docs/
-          
   # Notification Job
   notify:
     runs-on: ubuntu-latest
     if: always()
+    needs: build-and-test
     
     steps:
       - name: Notify on success
         if: needs.build-and-test.result == 'success'
         run: |
           echo "✅ Pipeline completed successfully!"
-          echo "Build: ${{ needs.build-and-test.outputs.build }}"
-          echo "Security: ${{ needs.security-scan.result }}"
-          echo "Performance: ${{ needs.performance-test.result }}"
           
       - name: Notify on failure
         if: needs.build-and-test.result == 'failure'

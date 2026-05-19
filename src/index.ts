@@ -37,7 +37,7 @@ app.post('/api/calculate', (req: express.Request, res: express.Response) => {
     res.json({ result });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'ValidationError', details: error.errors });
+      return res.status(400).json({ error: 'ValidationError', details: error.issues });
     }
     res.status(500).json({ error: (error as Error).name, message: (error as Error).message });
   }

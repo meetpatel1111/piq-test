@@ -14,8 +14,6 @@ This repository serves as the official demonstration and testing ground for **Pi
 piq-test/
 ├── src/
 │   └── index.ts          # Express API with intentional failure modes
-├── tests/
-│   └── api.test.ts       # Test suite designed to trigger PipelineIQ
 ├── package.json          # Modern TS + Vitest configuration
 ├── pipelineiq-config.json # Optimized configuration for v0.8.0
 ├── azure-pipelines.yml   # Production-ready Azure DevOps pipeline
@@ -38,9 +36,6 @@ npm install
 
 # Run the API locally
 npm run dev
-
-# Run tests (some are designed to fail for PipelineIQ testing)
-npm test
 ```
 
 ## 🛰 CI/CD Integration
