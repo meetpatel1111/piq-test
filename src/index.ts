@@ -6,12 +6,28 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Health check - always passes
-app.get('/health', (req: express.Request, res: express.Response) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+// Root endpoint with info
+app.get('/', (req: express.Request, res: express.Response) => {
+  res.json({
+    message: 'Welcome to the stable PipelineIQ Test API',
+    endpoints: {
+      health: 'GET /health',
+      calculate: 'POST /api/calculate',
+      data: 'GET /api/data'
+    }
+  });
 });
 
-// Calculator endpoint - intentionally fragile for testing RCA
+// Health check endpoint
+app.get('/health', (req: express.Request, res: express.Response) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: '1.1.0'
+  });
+});
+
+// Safe Calculator Endpoint using Zod for validation
 app.post('/api/calculate', (req: express.Request, res: express.Response) => {
   try {
     const schema = z.object({
@@ -22,16 +38,26 @@ app.post('/api/calculate', (req: express.Request, res: express.Response) => {
 
     const { a, b, operation } = schema.parse(req.body);
 
-    if (operation === 'divide' && b === 0) {
-      throw new Error('DivisionByZero: Cannot divide by zero in standard mathematics');
-    }
-
     let result = 0;
     switch (operation) {
-      case 'add': result = a + b; break;
-      case 'subtract': result = a - b; break;
-      case 'multiply': result = a * b; break;
-      case 'divide': result = a / b; break;
+      case 'add':
+        result = a + b;
+        break;
+      case 'subtract':
+        result = a - b;
+        break;
+      case 'multiply':
+        result = a * b;
+        break;
+      case 'divide':
+        if (b === 0) {
+          return res.status(400).json({ 
+            error: 'ValidationError', 
+            message: 'Division by zero is not allowed' 
+          });
+        }
+        result = a / b;
+        break;
     }
 
     res.json({ result });
@@ -39,26 +65,30 @@ app.post('/api/calculate', (req: express.Request, res: express.Response) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'ValidationError', details: error.issues });
     }
-    res.status(500).json({ error: (error as Error).name, message: (error as Error).message });
+    res.status(500).json({ error: 'InternalServerError', message: (error as Error).message });
   }
 });
 
-// Database endpoint - simulates transient infrastructure failures
+// Database Data simulation (Stable by default, can be simulated)
 app.get('/api/data', (req: express.Request, res: express.Response) => {
   const isDbDown = process.env.SIMULATE_DB_FAILURE === 'true';
   
   if (isDbDown) {
     return res.status(503).json({ 
       error: 'ServiceUnavailable', 
-      message: 'Failed to connect to the primary database cluster in us-east-1' 
+      message: 'Failed to connect to the primary database cluster' 
     });
   }
 
-  res.json({ data: ['item1', 'item2', 'item3'], source: 'database' });
+  res.json({ 
+    data: ['stable-item1', 'stable-item2', 'stable-item3'], 
+    source: 'database',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(port, () => {
-  console.log(`Unstable Test API listening at http://localhost:${port}`);
+  console.log(`Stable Test API listening at http://localhost:${port}`);
 });
 
 export default app;
