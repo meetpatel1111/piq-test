@@ -45,14 +45,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PipelineIQ CLI
-        # TEST: install from the PipelineIQ test branch instead of the published npm package.
-        # Revert to `npm install -g pipelineiq` after validating.
-        run: npm install -g "github:meetpatel1111/PipelineIQ#test/blast-radius-guardrails"
+      # TEST: check out the PipelineIQ test branch and run its prebuilt dist directly,
+      # instead of `npm install -g pipelineiq`. Revert to the published package after validating.
+      - name: Checkout PipelineIQ (test branch)
+        uses: actions/checkout@v4
+        with:
+          repository: meetpatel1111/PipelineIQ
+          ref: test/blast-radius-guardrails
+          path: _piq
+
+      - name: Install PipelineIQ runtime deps
+        run: npm ci --omit=dev
+        working-directory: _piq
 
       - name: Create Jira ticket with PipelineIQ
         run: |
-          pipelineiq analyze \
+          node "$GITHUB_WORKSPACE/_piq/dist/cli/index.js" analyze \
             --jira-url ${{ secrets.JIRA_URL }} \
             --jira-project "SCRUM" \
             --jira-email ${{ secrets.JIRA_EMAIL }} \
