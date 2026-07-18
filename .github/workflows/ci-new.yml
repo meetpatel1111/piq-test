@@ -58,11 +58,12 @@ jobs:
         run: |
           npm ci
           npm run build
+          npm install -g .
         working-directory: _piq
 
       - name: Create Jira ticket with PipelineIQ
         run: |
-          node "$GITHUB_WORKSPACE/_piq/dist/cli/index.js" analyze \
+          pipelineiq analyze \
             --jira-url ${{ secrets.JIRA_URL }} \
             --jira-project "SCRUM" \
             --jira-email ${{ secrets.JIRA_EMAIL }} \
