@@ -47,11 +47,11 @@ jobs:
 
       # TEST: check out the PipelineIQ test branch and run its prebuilt dist directly,
       # instead of `npm install -g pipelineiq`. Revert to the published package after validating.
-      - name: Checkout PipelineIQ (test branch)
+      - name: Checkout PipelineIQ (main branch)
         uses: actions/checkout@v4
         with:
           repository: meetpatel1111/PipelineIQ
-          ref: test/blast-radius-guardrails
+          ref: main
           path: _piq
 
       - name: Install PipelineIQ runtime deps
