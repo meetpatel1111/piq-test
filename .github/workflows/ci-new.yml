@@ -54,8 +54,10 @@ jobs:
           ref: main
           path: _piq
 
-      - name: Install PipelineIQ runtime deps
-        run: npm ci --omit=dev
+      - name: Install PipelineIQ runtime deps and build
+        run: |
+          npm ci
+          npm run build
         working-directory: _piq
 
       - name: Create Jira ticket with PipelineIQ
