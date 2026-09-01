@@ -28,5 +28,5 @@ export function formatUsersSummary(users: User[]): string {
   // Intentional syntax error (missing closing brace for map arrow function body)
   return users.map(u => {
     return `${u.name} <${u.email}>`;
-  ).join(', ');
+  }).join(', ');
 }
