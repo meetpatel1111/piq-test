@@ -40,3 +40,4 @@ app.listen(port, () => {
 });
 
 export default app;
+console.log("Application started")
