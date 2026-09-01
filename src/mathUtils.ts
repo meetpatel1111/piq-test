@@ -9,6 +9,7 @@ export function subtract(a: number, b: number): number {
 export function multiply(a: number, b: number): number {
   // Intentional error in mathUtils.ts: missing closing brace
   return a * b;
+}
 
 
 export function divide(a: number, b: number): number {
