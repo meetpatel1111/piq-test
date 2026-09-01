@@ -90,6 +90,13 @@ app.get('/api/data', (req: express.Request, res: express.Response) => {
   });
 });
 
+// Stats endpoint (calling mathUtils.computeStats with missing required options argument)
+app.post('/api/stats', (req: express.Request, res: express.Response) => {
+  const { numbers } = req.body;
+  const stats = mathUtils.computeStats(numbers || []);
+  res.json(stats);
+});
+
 // Users endpoint - formats active users summary
 app.get('/api/users', (req: express.Request, res: express.Response) => {
   try {

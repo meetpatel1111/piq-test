@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "build": "tsup src/index.ts --format esm --outDir dist",
+    "build": "tsc --noEmit && tsup src/index.ts --format esm --outDir dist",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit"
   },

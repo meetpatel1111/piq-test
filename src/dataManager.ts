@@ -6,6 +6,11 @@ export interface User {
   active: boolean;
 }
 
+export interface SummaryConfig {
+  includeEmail: boolean;
+  prefix?: string;
+}
+
 const mockUsers: User[] = [
   { id: 1, name: 'Alice Smith', email: 'alice@example.com', role: 'admin', active: true },
   { id: 2, name: 'Bob Jones', email: 'bob@example.com', role: 'user', active: false },
@@ -24,9 +29,9 @@ export function getUsersByRole(role: 'admin' | 'user' | 'guest'): User[] {
   return mockUsers.filter(user => user.role === role);
 }
 
-export function formatUsersSummary(users: User[]): string {
-  // Intentional syntax error (missing closing brace for map arrow function body)
+export function formatUsersSummary(users: User[], config: SummaryConfig): string {
   return users.map(u => {
-    return `${u.name} <${u.email}>`;
+    const emailPart = config.includeEmail ? ` <${u.email}>` : '';
+    return `${config.prefix || ''}${u.name}${emailPart}`;
   }).join(', ');
 }
