@@ -29,3 +29,4 @@ export function formatUsersSummary(users: User[]): string {
   return users.map(u => `${u.name} <${u.email}>`).join(', ');
 }
 export function processData(data: { id: string, value: number }) {
+}
