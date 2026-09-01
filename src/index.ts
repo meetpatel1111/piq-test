@@ -6,113 +6,37 @@ import * as dataManager from './dataManager.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
-
 app.use(express.json());
 
-// Root endpoint with info
+// Root endpoint
 app.get('/', (req: express.Request, res: express.Response) => {
   res.json({
-    message: 'Welcome to the stable PipelineIQ Test API',
-    endpoints: {
-      health: 'GET /health',
-      calculate: 'POST /api/calculate',
-      data: 'GET /api/data'
-    }
+    message: 'PipelineIQ Multi-File Test API',
+    status: 'online'
   });
 });
 
-// Health check endpoint
-app.get('/health', (req: express.Request, res: express.Response) => {
-  res.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    version: '1.1.0'
-  });
-});
-
-// Safe Calculator Endpoint using Zod for validation
+// Calculate endpoint
 app.post('/api/calculate', (req: express.Request, res: express.Response) => {
-  try {
-    const schema = z.object({
-      a: z.number(),
-      b: z.number(),
-      operation: z.enum(['add', 'subtract', 'multiply', 'divide'])
-    });
-
-    const { a, b, operation } = schema.parse(req.body);
-
-    let result = 0;
-    switch (operation) {
-      case 'add':
-        result = mathUtils.add(a, b);
-        break;
-      case 'subtract':
-        result = mathUtils.subtract(a, b);
-        break;
-      case 'multiply':
-        result = a * b;
-        break;
-      case 'divide':
-        if (b === 0) {
-          return res.status(400).json({ 
-            error: 'ValidationError', 
-            message: 'Division by zero is not allowed' 
-          });
-        }
-        result = mathUtils.divide(a, b);
-        break;
-    }
-
-    res.json({ result });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'ValidationError', details: error.issues });
-    }
-    res.status(500).json({ error: 'InternalServerError', message: (error as Error).message });
-  }
+  const { a, b, operation } = req.body;
+  if (operation === 'add') return res.json({ result: mathUtils.add(a, b) });
+  if (operation === 'multiply') return res.json({ result: mathUtils.multiply(a, b) });
+  res.json({ result: 0 });
 });
 
-// Database Data simulation (Stable by default, can be simulated)
-app.get('/api/data', (req: express.Request, res: express.Response) => {
-  const isDbDown = process.env.SIMULATE_DB_FAILURE === 'true';
-  
-  if (isDbDown) {
-    return res.status(503).json({ 
-      error: 'ServiceUnavailable', 
-      message: 'Failed to connect to the primary database cluster' 
-    });
-  }
-
-  res.json({ 
-    data: ['stable-item1', 'stable-item2', 'stable-item3'], 
-    source: 'database',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Stats endpoint (calling mathUtils.computeStats with missing required options argument)
-app.post('/api/stats', (req: express.Request, res: express.Response) => {
-  const { numbers } = req.body;
-  const stats = mathUtils.computeStats(numbers || []);
-  res.json(stats);
-});
-
-// Users endpoint - formats active users summary
+// Users endpoint (Intentional error in index.ts: missing paren in catch clause)
 app.get('/api/users', (req: express.Request, res: express.Response) => {
   try {
     const activeUsers = dataManager.getActiveUsers();
     const summary = dataManager.formatUsersSummary(activeUsers);
-    res.json({
-      summary,
-      count: activeUsers.length
-    });
-  } catch (error) {
+    res.json({ summary, count: activeUsers.length });
+  } catch (error {
     res.status(500).json({ error: 'InternalServerError', message: (error as Error).message });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Stable Test API listening at http://localhost:${port}`);
+  console.log(`Test API listening at http://localhost:${port}`);
 });
 
 export default app;

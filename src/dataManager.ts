@@ -6,11 +6,6 @@ export interface User {
   active: boolean;
 }
 
-export interface SummaryConfig {
-  includeEmail: boolean;
-  prefix?: string;
-}
-
 const mockUsers: User[] = [
   { id: 1, name: 'Alice Smith', email: 'alice@example.com', role: 'admin', active: true },
   { id: 2, name: 'Bob Jones', email: 'bob@example.com', role: 'user', active: false },
@@ -22,16 +17,14 @@ export function getUserById(id: number): User | undefined {
 }
 
 export function getActiveUsers(): User[] {
-  return mockUsers.filter(user => user.active);
+  // Intentional error in dataManager.ts: missing closing paren in filter call
+  return mockUsers.filter(user => user.active;
 }
 
 export function getUsersByRole(role: 'admin' | 'user' | 'guest'): User[] {
   return mockUsers.filter(user => user.role === role);
 }
 
-export function formatUsersSummary(users: User[], config: SummaryConfig): string {
-  return users.map(u => {
-    const emailPart = config.includeEmail ? ` <${u.email}>` : '';
-    return `${config.prefix || ''}${u.name}${emailPart}`;
-  }).join(', ');
+export function formatUsersSummary(users: User[]): string {
+  return users.map(u => `${u.name} <${u.email}>`).join(', ');
 }
