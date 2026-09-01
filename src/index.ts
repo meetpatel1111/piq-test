@@ -30,7 +30,7 @@ app.get('/api/users', (req: express.Request, res: express.Response) => {
     const activeUsers = dataManager.getActiveUsers();
     const summary = dataManager.formatUsersSummary(activeUsers);
     res.json({ summary, count: activeUsers.length });
-  } catch (error {
+  } catch (error) {
     res.status(500).json({ error: 'InternalServerError', message: (error as Error).message });
   }
 });
