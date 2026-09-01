@@ -1,0 +1,5 @@
+[project]
+name = "piq-python-test"
+version = "1.0.0"
+description = "PipelineIQ Python test suite"
+dependencies = []

@@ -1,4 +1,4 @@
-name: CI/CD Pipeline with PipelineIQ
+name: Multi-Language CI/CD with PipelineIQ
 
 on:
   workflow_dispatch:
@@ -8,45 +8,64 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  
-env:
-  NODE_VERSION: '20'
 
 jobs:
-  # Build and Test Application
+  # Multi-Language Build & Test Matrix
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Setup Node.js
+
+      - name: Setup Node.js (TypeScript)
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '20'
           cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Build application
-        run: npm run build
-        env:
-          NODE_ENV: production
-        
-  # PipelineIQ Integration - Always runs to handle failures
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: 1. Build TypeScript Application
+        run: |
+          npm ci
+          npm run build
+
+      - name: 2. Test Go Module
+        run: |
+          cd golang
+          go test -v ./...
+
+      - name: 3. Test Rust Crate
+        run: |
+          cd rust
+          cargo test --verbose
+
+      - name: 4. Test Python Suite
+        run: |
+          python -m unittest discover -s python -v
+
+  # PipelineIQ Autonomous Self-Healing & Incident Handler
   pipelineiq-failure-handler:
     runs-on: ubuntu-latest
     if: always() && (needs.build-and-test.result == 'failure' || needs.build-and-test.result == 'cancelled')
     needs: build-and-test
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # TEST: check out the PipelineIQ test branch and run its prebuilt dist directly,
-      # instead of `npm install -g pipelineiq`. Revert to the published package after validating.
       - name: Checkout PipelineIQ (main branch)
         uses: actions/checkout@v4
         with:
@@ -61,45 +80,44 @@ jobs:
           npm install -g .
         working-directory: _piq
 
-      - name: Create Jira ticket with PipelineIQ
+      - name: Autonomous AI Self-Healing & Jira Creation
         run: |
           pipelineiq analyze \
-            --jira-url ${{ secrets.JIRA_URL }} \
+            --jira-url "${{ secrets.JIRA_URL }}" \
             --jira-project "SCRUM" \
-            --jira-email ${{ secrets.JIRA_EMAIL }} \
-            --jira-token ${{ secrets.JIRA_TOKEN }} \
-            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --jira-email "${{ secrets.JIRA_EMAIL }}" \
+            --jira-token "${{ secrets.JIRA_TOKEN }}" \
+            --github-token "${{ secrets.GITHUB_TOKEN }}" \
             --ai-mode assist \
             --ai-provider gemini \
-            --ai-model "gemini-3.1-flash-lite" \
-            --ai-api-key ${{ secrets.AI_API_KEY }} \
+            --ai-model "gemini-2.5-flash" \
+            --ai-api-key "${{ secrets.AI_API_KEY }}" \
             --environment "${{ github.ref_name }}" \
             --repository "${{ github.repository }}" \
             --branch "${{ github.ref_name }}" \
             --commit "${{ github.sha }}" \
             --pipeline "${{ github.workflow }}" \
-            --run-id ${{ github.run_id }} \
-            --run-number ${{ github.run_number }} \
+            --run-id "${{ github.run_id }}" \
+            --run-number "${{ github.run_number }}" \
             --actor "${{ github.actor }}" \
             --issue-type Bug \
             --event-name "${{ github.event_name }}" \
-            --run-attempt ${{ github.run_attempt }} \
-            --runner-os ${{ runner.os }} \
-            --runner-arch ${{ runner.arch }} \
-            --api-url ${{ github.api_url }} \
+            --run-attempt "${{ github.run_attempt }}" \
+            --runner-os "${{ runner.os }}" \
+            --runner-arch "${{ runner.arch }}" \
+            --api-url "${{ github.api_url }}" \
             --job-name "${{ github.job }}" \
             --repository-owner "${{ github.repository_owner }}" \
             --format github-actions \
             --self-heal \
-            --self-heal-confidence 0.8 \
+            --self-heal-confidence 0.7 \
             --self-heal-max-files 10 \
             --self-heal-max-lines 200 \
             --self-heal-draft \
             --self-heal-reviewers "meetpatel1111" \
-            --self-heal-labels "self-healed,automated" \
-            --self-heal-categories "build,test,lint" \
+            --self-heal-labels "self-healed,multi-language" \
+            --self-heal-categories "*" \
             --self-heal-verify \
-            --self-heal-verification-commands "npm install,npm run build" \
             --self-heal-auto-lockfile \
             --dedup-window 24
         env:
@@ -109,21 +127,3 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
-                
-  # Notification Job
-  notify:
-    runs-on: ubuntu-latest
-    if: always()
-    needs: build-and-test
-    
-    steps:
-      - name: Notify on success
-        if: needs.build-and-test.result == 'success'
-        run: |
-          echo "✅ Pipeline completed successfully!"
-          
-      - name: Notify on failure
-        if: needs.build-and-test.result == 'failure'
-        run: |
-          echo "❌ Pipeline failed!"
-          echo "Check PipelineIQ for Jira ticket creation"
